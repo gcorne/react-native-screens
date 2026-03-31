@@ -21,8 +21,25 @@ class JSI_EXPORT RNSScreenState final {
   using Shared = std::shared_ptr<const RNSScreenState>;
 
   RNSScreenState() {};
-  RNSScreenState(Size frameSize_, Point contentOffset_)
-      : frameSize(frameSize_), contentOffset(contentOffset_) {};
+  RNSScreenState(
+      Size frameSize_,
+      Point contentOffset_,
+      Point viewportOffset_ = {})
+      : frameSize(frameSize_),
+        contentOffset(contentOffset_),
+        viewportOffset(viewportOffset_) {};
+
+#if !defined(ANDROID)
+  bool operator==(const RNSScreenState &other) const {
+    return frameSize == other.frameSize &&
+        contentOffset == other.contentOffset &&
+        viewportOffset == other.viewportOffset;
+  }
+
+  bool operator!=(const RNSScreenState &other) const {
+    return !(*this == other);
+  }
+#endif
 
 #ifdef ANDROID
   RNSScreenState(RNSScreenState const &previousState, folly::dynamic data)
@@ -34,12 +51,14 @@ class JSI_EXPORT RNSScreenState final {
             Point{
                 (Float)data["contentOffsetX"].getDouble(),
                 (Float)data["contentOffsetY"].getDouble()}),
+        viewportOffset(previousState.viewportOffset),
         lastKnownHeaderHeight_{previousState.lastKnownHeaderHeight_},
         headerCorrectionModes_{previousState.headerCorrectionModes_} {};
 #endif
 
   Size frameSize{};
   Point contentOffset;
+  Point viewportOffset{};
 
 #ifdef ANDROID
   folly::dynamic getDynamic() const;

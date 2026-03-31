@@ -11,18 +11,21 @@ namespace react {
 
 JSI_EXPORT extern const char RNSModalScreenComponentName[];
 
-class JSI_EXPORT RNSModalScreenShadowNode final
-    : public ConcreteViewShadowNode<
-          RNSModalScreenComponentName,
-          RNSScreenProps,
-          RNSScreenEventEmitter,
-          RNSScreenState> {
- public:
-  using ConcreteViewShadowNode::ConcreteViewShadowNode;
+using RNSModalScreenShadowNodeBase = ConcreteViewShadowNode<
+    RNSModalScreenComponentName,
+    RNSScreenProps,
+    RNSScreenEventEmitter,
+    RNSScreenState>;
 
+class JSI_EXPORT RNSModalScreenShadowNode final
+    : public RNSModalScreenShadowNodeBase {
+ public:
+  using RNSModalScreenShadowNodeBase::RNSModalScreenShadowNodeBase;
+
+  Transform getTransform() const override;
   Point getContentOriginOffset(bool includeTransform) const override;
   static ShadowNodeTraits BaseTraits() {
-    auto traits = ConcreteViewShadowNode::BaseTraits();
+    auto traits = RNSModalScreenShadowNodeBase::BaseTraits();
     traits.set(ShadowNodeTraits::Trait::RootNodeKind);
     return traits;
   }

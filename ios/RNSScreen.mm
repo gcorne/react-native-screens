@@ -81,6 +81,7 @@ struct ContentWrapperBox {
 #ifdef RCT_NEW_ARCH_ENABLED
   RCTSurfaceTouchHandler *_touchHandler;
   react::RNSScreenShadowNode::ConcreteState::Shared _state;
+  react::RNSScreenState _lastSendState;
   // on fabric, they are not available by default so we need them exposed here too
   NSMutableArray<UIView *> *_reactSubviews;
 #else
@@ -202,15 +203,35 @@ RNS_IGNORE_SUPER_CALL_END
     const CGFloat effectiveContentOffsetY = config.largeTitle || config.translucent || self.isPresentedAsNativeModal
         ? 0
         : [_controller calculateHeaderHeightIsModal:self.isPresentedAsNativeModal];
+    CGPoint viewportOffset = CGPointZero;
+    if ([self isKindOfClass:RNSModalScreen.class] && self.window != nil && self.superview != nil) {
+      // Fabric `measureInWindow` relies on shadow-tree geometry, so modal roots need
+      // to publish their actual window origin explicitly.
+      viewportOffset = [self.window convertRect:self.frame fromView:self.superview].origin;
+    }
 
-    auto newState = react::RNSScreenState{RCTSizeFromCGSize(self.bounds.size), {0, effectiveContentOffsetY}};
+    auto newState = react::RNSScreenState{
+        RCTSizeFromCGSize(self.bounds.size),
+        {0, effectiveContentOffsetY},
+        RCTPointFromCGPoint(viewportOffset)};
 
+    if (newState == _lastSendState) {
+      return;
+    }
+
+    _lastSendState = newState;
+    // Fabric `measureInWindow` reads the currently committed shadow-tree revision.
+    // Modal roots publish viewportOffset from native layout, so this path must be
+    // committed immediately to avoid stale coordinates during presentation.
+    const auto shouldUseImmediateUpdateMode =
+        _synchronousShadowStateUpdatesEnabled ||
+        [self isKindOfClass:RNSModalScreen.class];
     _state->updateState(
         std::move(newState)
 #if REACT_NATIVE_VERSION_MINOR >= 82
             ,
-        _synchronousShadowStateUpdatesEnabled ? facebook::react::EventQueue::UpdateMode::unstable_Immediate
-                                              : facebook::react::EventQueue::UpdateMode::Asynchronous
+        shouldUseImmediateUpdateMode ? facebook::react::EventQueue::UpdateMode::unstable_Immediate
+                                     : facebook::react::EventQueue::UpdateMode::Asynchronous
 #endif
     );
 
@@ -1580,6 +1601,19 @@ RNS_IGNORE_SUPER_CALL_END
 - (void)updateState:(react::State::Shared const &)state oldState:(react::State::Shared const &)oldState
 {
   _state = std::static_pointer_cast<const react::RNSScreenShadowNode::ConcreteState>(state);
+
+  if ([self isKindOfClass:RNSModalScreen.class] && self.window != nil && self.superview != nil) {
+    // Modal screens can be laid out before their Fabric state is attached. Re-publish bounds
+    // here so measureInWindow does not have to wait for an unrelated rerender.
+    [self updateBounds];
+  }
+}
+
+- (void)prepareForRecycle
+{
+  [super prepareForRecycle];
+  _state.reset();
+  _lastSendState = react::RNSScreenState{};
 }
 
 - (void)updateLayoutMetrics:(const react::LayoutMetrics &)layoutMetrics
