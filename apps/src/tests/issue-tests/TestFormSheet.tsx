@@ -1,20 +1,34 @@
 import { NavigationContainer, RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp, createNativeStackNavigator } from '@react-navigation/native-stack';
+import {
+  NativeStackNavigationProp,
+  createNativeStackNavigator,
+} from '@react-navigation/native-stack';
 import React from 'react';
-import { Button, FlatList, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  Button,
+  FlatList,
+  ScrollView,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import PressableWithFeedback from '../../shared/PressableWithFeedback';
 import { Spacer } from '../../shared';
 
 type ItemData = {
-  id: number,
+  id: number;
   text: string;
-}
+};
 
 type RouteParamList = {
   Home: undefined;
   Second: undefined;
   FormSheet: undefined;
   SecondFormSheet: undefined;
+  MeasureWindowSheet: {
+    windowHeight: number;
+  };
   FormSheetWithFlatList: undefined;
   FormSheetWithScrollView: undefined;
   GlossyFormSheet: undefined;
@@ -23,24 +37,63 @@ type RouteParamList = {
 type RouteProps<RouteName extends keyof RouteParamList> = {
   navigation: NativeStackNavigationProp<RouteParamList, RouteName>;
   route: RouteProp<RouteParamList, RouteName>;
-}
+};
+
+type MeasureInWindowResult = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 
 const Stack = createNativeStackNavigator<RouteParamList>();
 
 function generateData(count: number): ItemData[] {
-  return Array.from({ length: count }).map((_, index) => ({ id: index, text: `Item no. ${index}` }));
+  return Array.from({ length: count }).map((_, index) => ({
+    id: index,
+    text: `Item no. ${index}`,
+  }));
 }
 
 function Home({ navigation }: RouteProps<'Home'>) {
+  const { height: windowHeight } = useWindowDimensions();
+
   return (
     <View style={{ flex: 1, backgroundColor: 'lightsalmon' }}>
-      <Button title="Open sheet" onPress={() => navigation.navigate('FormSheet')} />
-      <Button title="Open Second" onPress={() => navigation.navigate('Second')} />
-      <Button title="Open sheet with FlatList" onPress={() => navigation.navigate('FormSheetWithFlatList')} />
-      <Button title="Open sheet with ScrollView" onPress={() => navigation.navigate('FormSheetWithScrollView')} />
-      <Button title="Open glossy form sheet" onPress={() => navigation.navigate('GlossyFormSheet')} />
+      <Button
+        title="Open sheet"
+        onPress={() => navigation.navigate('FormSheet')}
+      />
+      <Button
+        title="Open Second"
+        onPress={() => navigation.navigate('Second')}
+      />
+      <Button
+        title="Open measurement sheet"
+        onPress={() =>
+          navigation.navigate('MeasureWindowSheet', { windowHeight })
+        }
+        testID="home-button-open-measure-window-sheet"
+      />
+      <Button
+        title="Open sheet with FlatList"
+        onPress={() => navigation.navigate('FormSheetWithFlatList')}
+      />
+      <Button
+        title="Open sheet with ScrollView"
+        onPress={() => navigation.navigate('FormSheetWithScrollView')}
+      />
+      <Button
+        title="Open glossy form sheet"
+        onPress={() => navigation.navigate('GlossyFormSheet')}
+      />
       <PressableWithFeedback>
-        <View style={{ alignItems: 'center', height: 40, justifyContent: 'center' }}>
+        <View
+          style={{
+            alignItems: 'center',
+            height: 40,
+            justifyContent: 'center',
+          }}>
           <Text>Pressable</Text>
         </View>
       </PressableWithFeedback>
@@ -63,16 +116,36 @@ function FormSheet({ navigation }: RouteProps<'FormSheet'>) {
     <View style={{ backgroundColor: 'lightgreen', flex: 1 }}>
       <View style={{ paddingTop: 20 }}>
         <Button title="Go back" onPress={() => navigation.goBack()} />
-        <Button title="Open Second" onPress={() => navigation.navigate('Second')} />
-        <Button title="Open SecondFormSheet" onPress={() => navigation.navigate('SecondFormSheet')} />
+        <Button
+          title="Open Second"
+          onPress={() => navigation.navigate('Second')}
+        />
+        <Button
+          title="Open SecondFormSheet"
+          onPress={() => navigation.navigate('SecondFormSheet')}
+        />
         <PressableWithFeedback>
-          <View style={{ alignItems: 'center', height: 40, justifyContent: 'center' }}>
+          <View
+            style={{
+              alignItems: 'center',
+              height: 40,
+              justifyContent: 'center',
+            }}>
             <Text>Pressable</Text>
           </View>
         </PressableWithFeedback>
       </View>
       <View style={{ alignItems: 'center' }}>
-        <TextInput style={{ marginVertical: 12, paddingVertical: 8, backgroundColor: 'lavender', borderRadius: 24, width: '80%' }} placeholder="Trigger keyboard..." />
+        <TextInput
+          style={{
+            marginVertical: 12,
+            paddingVertical: 8,
+            backgroundColor: 'lavender',
+            borderRadius: 24,
+            width: '80%',
+          }}
+          placeholder="Trigger keyboard..."
+        />
       </View>
     </View>
   );
@@ -85,11 +158,23 @@ function SecondFormSheet({ navigation }: RouteProps<'SecondFormSheet'>) {
     <View style={{ backgroundColor: 'lightgreen', flex: undefined }}>
       <View style={{ paddingTop: 20 }}>
         <Button title="Go back" onPress={() => navigation.goBack()} />
-        <Button title="Open Second" onPress={() => navigation.navigate('Second')} />
+        <Button
+          title="Open Second"
+          onPress={() => navigation.navigate('Second')}
+        />
         <Button title="Pop to top" onPress={() => navigation.popToTop()} />
       </View>
       <View style={{ alignItems: 'center' }}>
-        <TextInput style={{ marginVertical: 12, paddingVertical: 8, backgroundColor: 'lavender', borderRadius: 24, width: '80%' }} placeholder="Trigger keyboard..." />
+        <TextInput
+          style={{
+            marginVertical: 12,
+            paddingVertical: 8,
+            backgroundColor: 'lavender',
+            borderRadius: 24,
+            width: '80%',
+          }}
+          placeholder="Trigger keyboard..."
+        />
       </View>
       <View style={{ backgroundColor: 'green', height: 500 }}>
         <Text>Additional content</Text>
@@ -98,15 +183,101 @@ function SecondFormSheet({ navigation }: RouteProps<'SecondFormSheet'>) {
   );
 }
 
+function MeasureWindowSheet({ route }: RouteProps<'MeasureWindowSheet'>) {
+  const { windowHeight } = route.params;
+  const markerRef = React.useRef<View>(null);
+  const [measureResult, setMeasureResult] =
+    React.useState<MeasureInWindowResult | null>(null);
 
-function FormSheetWithFlatList({ }: RouteProps<'FormSheetWithFlatList'>) {
-  const renderItem = React.useCallback(({ item }: { item: ItemData }) => (
-    <View>
-      <Text>
-        {item.text}
+  const fillerHeight = Math.max(72, Math.round(windowHeight * 0.3) - 120);
+  const roundedWindowHeight = Math.round(windowHeight);
+  const expectedYThreshold = Math.round(windowHeight * 0.5);
+  const looksWindowRelative =
+    measureResult != null && measureResult.y >= expectedYThreshold;
+
+  const measureMarkerInWindow = React.useCallback(() => {
+    markerRef.current?.measureInWindow((x, y, width, height) => {
+      setMeasureResult({ x, y, width, height });
+    });
+  }, []);
+  const statusText =
+    measureResult == null
+      ? 'Tap Measure to capture window coordinates.'
+      : looksWindowRelative
+      ? 'Measurement passes the heuristic.'
+      : 'Measurement misses the heuristic.';
+
+  return (
+    <View style={{ paddingHorizontal: 16, paddingVertical: 20 }}>
+      <Button
+        title="Measure"
+        onPress={measureMarkerInWindow}
+        testID="measure-window-sheet-measure"
+      />
+      <Text
+        style={{ marginTop: 12, marginBottom: 8 }}
+        testID="measure-window-sheet-window-height">
+        windowHeight={roundedWindowHeight}
       </Text>
+      <View
+        ref={markerRef}
+        collapsable={false}
+        style={{
+          backgroundColor: 'lavender',
+          borderRadius: 16,
+          paddingHorizontal: 16,
+          paddingVertical: 14,
+          marginBottom: 16,
+          marginTop: 4,
+        }}
+        testID="measure-window-sheet-target">
+        <Text
+          style={{ fontSize: 16, fontWeight: '600', marginBottom: 8 }}
+          testID="measure-window-sheet-title">
+          measureInWindow in fitToContents formSheet
+        </Text>
+        <Text style={{ marginBottom: 4 }} testID="measure-window-sheet-result">
+          {measureResult == null
+            ? 'No measurement yet.'
+            : `x=${Math.round(measureResult.x)}, y=${Math.round(
+                measureResult.y,
+              )}, width=${Math.round(measureResult.width)}, height=${Math.round(
+                measureResult.height,
+              )}.`}
+        </Text>
+        <Text testID="measure-window-sheet-status">{statusText}</Text>
+        <Text
+          style={{ fontWeight: '700', marginTop: 4 }}
+          testID="measure-window-sheet-threshold">
+          {`Heuristic: the measurement is accurate when y >= ${expectedYThreshold}, which puts this fitToContents sheet in the lower half of a ${roundedWindowHeight}px window.`}
+        </Text>
+      </View>
+      <View
+        style={{
+          backgroundColor: 'lightgreen',
+          borderRadius: 16,
+          height: fillerHeight,
+          justifyContent: 'center',
+          paddingHorizontal: 16,
+        }}>
+        <Text testID="measure-window-sheet-filler">
+          Additional content keeps this fitToContents sheet close to 30% of the
+          screen height.
+        </Text>
+      </View>
     </View>
-  ), []);
+  );
+}
+
+function FormSheetWithFlatList({}: RouteProps<'FormSheetWithFlatList'>) {
+  const renderItem = React.useCallback(
+    ({ item }: { item: ItemData }) => (
+      <View>
+        <Text>{item.text}</Text>
+      </View>
+    ),
+    [],
+  );
 
   const data: ItemData[] = React.useMemo(() => generateData(1000), []);
   return (
@@ -118,9 +289,15 @@ function FormSheetWithFlatList({ }: RouteProps<'FormSheetWithFlatList'>) {
   );
 }
 
-const StickyHeader = React.forwardRef<View, { children?: React.ReactNode, collapsable?: boolean }>((props, ref: React.LegacyRef<View>) => {
+const StickyHeader = React.forwardRef<
+  View,
+  { children?: React.ReactNode; collapsable?: boolean }
+>((props, ref: React.LegacyRef<View>) => {
   return (
-    <View ref={ref} style={{ width: '100%', height: 150, backgroundColor: 'red' }} collapsable={props.collapsable ?? true}>
+    <View
+      ref={ref}
+      style={{ width: '100%', height: 150, backgroundColor: 'red' }}
+      collapsable={props.collapsable ?? true}>
       {props.children}
     </View>
   );
@@ -131,24 +308,28 @@ function FormSheetWithScrollView() {
   const [isExtraContentVisible, setExtraContentVisible] = React.useState(false);
 
   const data: ItemData[] = React.useMemo(() => generateData(150), []);
-  const renderItem = React.useCallback((item: ItemData) => (
-    <View key={item.id.toString()}>
-      <Text>
-        {item.text}
-      </Text>
-    </View>
-  ), []);
+  const renderItem = React.useCallback(
+    (item: ItemData) => (
+      <View key={item.id.toString()}>
+        <Text>{item.text}</Text>
+      </View>
+    ),
+    [],
+  );
 
   return (
     <>
-      <StickyHeader ref={headerRef} collapsable={false} >
-        <Button title="Toggle extra content" onPress={() => setExtraContentVisible(old => !old)} />
+      <StickyHeader ref={headerRef} collapsable={false}>
+        <Button
+          title="Toggle extra content"
+          onPress={() => setExtraContentVisible(old => !old)}
+        />
       </StickyHeader>
-      <ScrollView nestedScrollEnabled contentInsetAdjustmentBehavior="automatic">
+      <ScrollView
+        nestedScrollEnabled
+        contentInsetAdjustmentBehavior="automatic">
         {data.map(renderItem)}
-        {isExtraContentVisible && (
-          data.slice(0, 40).map(renderItem)
-        )}
+        {isExtraContentVisible && data.slice(0, 40).map(renderItem)}
       </ScrollView>
     </>
   );
@@ -182,7 +363,10 @@ function FormSheetFooter() {
   return (
     <View style={{ height: 64, backgroundColor: 'red' }}>
       <Text>Footer</Text>
-      <Button title="Just click me" onPress={() => console.log('Footer button clicked')} />
+      <Button
+        title="Just click me"
+        onPress={() => console.log('Footer button clicked')}
+      />
     </View>
   );
 }
@@ -193,61 +377,89 @@ export default function App() {
       <Stack.Navigator>
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="Second" component={Second} />
-        <Stack.Screen name="FormSheet" component={FormSheet} options={{
-          presentation: 'formSheet',
-          sheetAllowedDetents: [0.4, 0.75],
-          //sheetAllowedDetents: 'fitToContents',
-          sheetLargestUndimmedDetentIndex: 'none',
-          sheetCornerRadius: 8,
-          headerShown: false,
-          contentStyle: {
-            backgroundColor: 'lightblue',
-          },
-          //unstable_sheetFooter: FormSheetFooter,
-        }} />
-        <Stack.Screen name="SecondFormSheet" component={SecondFormSheet} options={{
-          presentation: 'formSheet',
-          //sheetAllowedDetents: [0.4, 0.75],
-          sheetAllowedDetents: 'fitToContents',
-          sheetLargestUndimmedDetentIndex: 'none',
-          sheetCornerRadius: 8,
-          headerShown: false,
-          contentStyle: {
-            backgroundColor: 'lightblue',
-          },
-          //unstable_sheetFooter: FormSheetFooter,
-        }} />
-        <Stack.Screen name="FormSheetWithFlatList" component={FormSheetWithFlatList} options={{
-          presentation: 'formSheet',
-          sheetAllowedDetents: [1.0],
-          sheetCornerRadius: 8,
-          headerShown: false,
-          contentStyle: {
-            backgroundColor: 'lightblue',
-          },
-        }} />
-        <Stack.Screen name="FormSheetWithScrollView" component={FormSheetWithScrollView} options={{
-          presentation: 'formSheet',
-          sheetAllowedDetents: [0.6],
-          sheetExpandsWhenScrolledToEdge: false,
-          sheetGrabberVisible: true,
-          sheetCornerRadius: 8,
-          headerShown: false,
-          contentStyle: {
-            backgroundColor: 'lightblue',
-          },
-        }} />
-        <Stack.Screen name='GlossyFormSheet' component={GlossyFormSheet} options={{
-          presentation: 'formSheet',
-          sheetAllowedDetents: [0.3, 0.5, 0.8],
-          //sheetAllowedDetents: 'fitToContents',
-          headerShown: false,
-          contentStyle: {
-            backgroundColor: '#ff00ff40',
-          },
-        }} />
+        <Stack.Screen
+          name="FormSheet"
+          component={FormSheet}
+          options={{
+            presentation: 'formSheet',
+            sheetAllowedDetents: [0.4, 0.75],
+            //sheetAllowedDetents: 'fitToContents',
+            sheetLargestUndimmedDetentIndex: 'none',
+            sheetCornerRadius: 8,
+            headerShown: false,
+            contentStyle: {
+              backgroundColor: 'lightblue',
+            },
+            //unstable_sheetFooter: FormSheetFooter,
+          }}
+        />
+        <Stack.Screen
+          name="SecondFormSheet"
+          component={SecondFormSheet}
+          options={{
+            presentation: 'formSheet',
+            //sheetAllowedDetents: [0.4, 0.75],
+            sheetAllowedDetents: 'fitToContents',
+            sheetLargestUndimmedDetentIndex: 'none',
+            sheetCornerRadius: 8,
+            headerShown: false,
+            contentStyle: {
+              backgroundColor: 'lightblue',
+            },
+            //unstable_sheetFooter: FormSheetFooter,
+          }}
+        />
+        <Stack.Screen
+          name="MeasureWindowSheet"
+          component={MeasureWindowSheet}
+          options={{
+            presentation: 'formSheet',
+            sheetAllowedDetents: 'fitToContents',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="FormSheetWithFlatList"
+          component={FormSheetWithFlatList}
+          options={{
+            presentation: 'formSheet',
+            sheetAllowedDetents: [1.0],
+            sheetCornerRadius: 8,
+            headerShown: false,
+            contentStyle: {
+              backgroundColor: 'lightblue',
+            },
+          }}
+        />
+        <Stack.Screen
+          name="FormSheetWithScrollView"
+          component={FormSheetWithScrollView}
+          options={{
+            presentation: 'formSheet',
+            sheetAllowedDetents: [0.6],
+            sheetExpandsWhenScrolledToEdge: false,
+            sheetGrabberVisible: true,
+            sheetCornerRadius: 8,
+            headerShown: false,
+            contentStyle: {
+              backgroundColor: 'lightblue',
+            },
+          }}
+        />
+        <Stack.Screen
+          name="GlossyFormSheet"
+          component={GlossyFormSheet}
+          options={{
+            presentation: 'formSheet',
+            sheetAllowedDetents: [0.3, 0.5, 0.8],
+            //sheetAllowedDetents: 'fitToContents',
+            headerShown: false,
+            contentStyle: {
+              backgroundColor: '#ff00ff40',
+            },
+          }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
-
